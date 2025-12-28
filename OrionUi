@@ -1,0 +1,117 @@
+-- 安全なOrion Libraryをロード（shlexwareはunsafeのため代替使用）
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Orion/main/source'))()
+
+-- カスタムテーマ：黒背景、白テキスト
+local CustomTheme = {
+    Main = Color3.fromRGB(15, 15, 15),      -- メイン背景：黒
+    Second = Color3.fromRGB(25, 25, 25),    -- セカンド背景：少し明るい黒
+    Stroke = Color3.fromRGB(120, 120, 255), -- 初期線色（虹アニメで変更）
+    Divider = Color3.fromRGB(120, 120, 255),-- 区切り線
+    Text = Color3.fromRGB(255, 255, 255),   -- テキスト：白
+    Text3 = Color3.fromRGB(255, 255, 255),  -- テキスト3：白
+    TextDark = Color3.fromRGB(240, 240, 240)-- 暗めテキスト：ほぼ白
+}
+
+-- テーマを登録
+OrionLib.Themes["CustomBlackRainbow"] = CustomTheme
+OrionLib.SelectedTheme = "CustomBlackRainbow"
+
+-- ウィンドウを作成（ThemeはSelectedThemeで適用）
+local Window = OrionLib:MakeWindow({
+    Name = "My Cool Hub - Black Rainbow Theme",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "MyHubConfig",
+    IntroEnabled = true,
+    IntroText = "黒×虹色テーマ！",
+    IntroIcon = "rbxassetid://4483345998"
+})
+
+-- 通知
+OrionLib:MakeNotification({
+    Name = "テーマ適用完了！",
+    Content = "背景:黒 | 線:虹色アニメ | テキスト:白",
+    Image = "rbxassetid://4483345998",
+    Time = 5
+})
+
+-- タブ作成
+local MainTab = Window:MakeTab({
+    Name = "メイン",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local InfoTab = Window:MakeTab({
+    Name = "情報",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- 要素例（前回と同じ）
+MainTab:AddToggle({
+    Name = "スピードハック",
+    Default = false,
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = Value and 100 or 16
+        end
+    end
+})
+
+MainTab:AddSlider({
+    Name = "ジャンプ力",
+    Min = 50,
+    Max = 200,
+    Default = 50,
+    Increment = 10,
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.JumpPower = Value
+        end
+    end
+})
+
+MainTab:AddButton({
+    Name = "虹色トグル (ON/OFF)",
+    Callback = function()
+        _G.RainbowEnabled = not _G.RainbowEnabled
+        OrionLib:MakeNotification({
+            Name = "虹色アニメ",
+            Content = _G.RainbowEnabled and "ON" or "OFF",
+            Time = 3
+        })
+    end
+})
+
+MainTab:AddLabel("虹色アニメをONにすると線が虹色に！")
+
+-- 情報タブ
+InfoTab:AddLabel("テーマ: 黒背景 + 白テキスト + 虹色線")
+InfoTab:AddParagraph("説明", "Orion UIのカスタムテーマ適用。線はアニメーションで虹色変化！")
+
+-- UI初期化
+OrionLib:Init()
+
+-- 虹色アニメーション（Orion UIのStrokeのみ対象）
+_G.RainbowEnabled = true
+spawn(function()
+    local RunService = game:GetService("RunService")
+    local TweenService = game:GetService("TweenService")
+    local hue = 0
+    while true do
+        if _G.RainbowEnabled then
+            hue = (hue + 0.01) % 1  -- 虹色回転
+            local rainbowColor = Color3.fromHSV(hue, 1, 1)
+            -- CoreGui内のOrion UIのStrokeを虹色に
+            for _, obj in pairs(game:GetService("CoreGui"):GetDescendants()) do
+                if obj:IsA("UIStroke") and obj.Parent and (obj.Parent.Name:find("Orion") or obj.Parent.Parent and obj.Parent.Parent.Name:find("Orion")) then
+                    obj.Color = rainbowColor
+                end
+            end
+        end
+        RunService.Heartbeat:Wait()
+    end
+end)
